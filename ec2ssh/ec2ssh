@@ -1,0 +1,64 @@
+#!/bin/bash
+
+printCommandOnly=false
+for i in "$@"
+do
+case $i in
+    -r|--repopulate)
+	  $(echo -n "s-" > ~/.ec2ssh  && aws ec2 describe-instances --query 'Reservations[*].Instances[*].Tags[?Key==`Name`]' --region=ap-southeast-2 --output="text" | awk '{print $2}' | perl -p -e 's/\n/ s-/' >> ~/.ec2ssh && aws ec2 describe-instances --query 'Reservations[*].Instances[*].Tags[?Key==`Name`]' --region=us-west-2 --output="text" | awk '{print $2}' | perl -p -e 's/\n/ o-/' >> ~/.ec2ssh)
+	  exit
+    ;;
+    -p|--printCommand)
+	printCommandOnly=true
+    ;;
+esac
+done
+
+ServerKey=$1 #first param
+
+CityKey=$(echo $ServerKey | awk -F"-" '{print $1}') #split by - and get the first column to get the key for city->region map
+EC2Name=$(echo $ServerKey | cut -c 3-) #remove the first 2 characters to get worker name
+
+# map city key to region name
+Region=""
+if [[ "$CityKey" = "s" ]]; then 
+   Region="ap-southeast-2";
+fi
+
+if [[ "$CityKey" = "o" ]]; then 
+   Region="us-west-2";
+fi
+
+instanceData=`aws ec2 describe-instances --query "Reservations[*].Instances[*].[PublicIpAddress,KeyName,State.Name]" --output=text --region=$Region --filter="Name=tag:Name,Values=$EC2Name"`
+
+IP=`echo $instanceData | awk '{print $1}'`
+KEY=`echo $instanceData | awk '{print $2}'`
+STATE=`echo $instanceData | awk '{print $3}'`
+
+if [[ "$STATE" != "running" ]]; then
+   echo "Server is currently off"
+   exit
+fi;
+
+if [[ "$IP" = "" ]]; then
+  echo "AWS internals returned no IP"
+  exit
+fi;
+
+if [[ "$KEY" = "" ]]; then
+  echo "AWS internals returned no key"
+  exit
+fi
+
+KeyFile=~/.ssh/$KEY.pem
+
+if [[ -r $KeyFile ]]; then
+  Command="ssh -i ~/.ssh/$KEY.pem ubuntu@$IP"
+  if [[ "$printCommandOnly" = true ]]; then
+     echo $Command
+     exit
+  fi
+  eval $Command
+else
+  echo "Key file $KeyFile not found";
+fi
