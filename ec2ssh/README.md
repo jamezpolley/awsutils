@@ -8,7 +8,8 @@ Usage
 ===
 * ec2ssh o-prod-log --- where o is oregon (s for sydney), and prod-log is worker name
 * `ec2ssh o-prod-log -p` which prints the ssh connect command, which means your shell will be running ssh, instead of ec2ssh
+
 Todo
 ===
-Split the IP resolution into it's own function so it can be used for other utils e.g. ec2scp
-Work out how to handle username specificaition. Potentially ec2ssh ubuntu@o-prod-log
+* Split the IP resolution into it's own function so it can be used for other utils e.g. ec2scp
+* Work out how to handle username specificaition. Potentially ec2ssh ubuntu@o-prod-log
