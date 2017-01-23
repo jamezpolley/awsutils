@@ -12,4 +12,4 @@ Usage
 Todo
 ===
 * Split the IP resolution into it's own function so it can be used for other utils e.g. ec2scp
-* Work out how to handle username specificaition. Potentially ec2ssh ubuntu@o-prod-log
+* Work out how to handle username specification. Potentially ec2ssh ubuntu@o-prod-log
